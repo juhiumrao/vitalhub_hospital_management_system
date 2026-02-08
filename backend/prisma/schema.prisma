@@ -1,0 +1,71 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String   @unique
+  password       String
+  role           String
+  doctorProfile  Doctor?
+  patientProfile Patient?
+  createdAt      DateTime @default(now())
+}
+
+model Doctor {
+  id               Int           @id @default(autoincrement())
+  userId           Int           @unique
+  user             User          @relation(fields: [userId], references: [id])
+  specialization   String
+  experience       Int           @default(0)
+  consultationFee  Float         @default(0)
+  appointments     Appointment[]
+}
+
+model Patient {
+  id           Int           @id @default(autoincrement())
+  userId       Int           @unique
+  user         User          @relation(fields: [userId], references: [id])
+  address      String
+  gender       String?
+  dob          DateTime?
+  bloodGroup   String?
+  appointments Appointment[]
+}
+
+model Appointment {
+  id           Int           @id @default(autoincrement())
+  date         DateTime
+  symptoms     String
+  status       String        @default("PENDING")
+  patientId    Int
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  doctorId     Int
+  doctor       Doctor        @relation(fields: [doctorId], references: [id])
+  prescription Prescription?
+  billing      Billing?
+  createdAt    DateTime      @default(now())
+}
+
+model Prescription {
+  id            Int         @id @default(autoincrement())
+  appointmentId Int         @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  medication    String
+  dosage        String
+  instructions  String
+}
+
+model Billing {
+  id            Int         @id @default(autoincrement())
+  appointmentId Int         @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  amount        Float
+  status        String      @default("UNPAID")
+}
